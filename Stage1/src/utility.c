@@ -23,6 +23,7 @@ char *allocateString(const int size) {
     return string;
 }
 
+// TODO: Fix finding the shell path if not executed directly from the bin directory
 void setShell() {
     char *path = allocateString(BUFFER_SIZE);
     getcwd(path, BUFFER_SIZE);
@@ -97,14 +98,17 @@ void echo(char **args) {
 }
 
 void pauseShell() {
+    fputs("Press ENTER to resume\n", stdout);
     int firstChar;
     // Check whether the first char of the line is the \n or EOF, if not, flush the input buffer and wait for the next
     while ((firstChar = getchar()) != '\n' && firstChar != EOF) {
+        fputs("Press ENTER to resume\n", stdout);
         int c;
         while ((c = getchar()) != '\n' && c != EOF); // Flush the leftover buffer
     }
 }
 
+// TODO: Fix finding the manual path if not executed directly from the bin directory, related to setShell();
 void help() {
     const char *envPath = getenv("SHELL");
 

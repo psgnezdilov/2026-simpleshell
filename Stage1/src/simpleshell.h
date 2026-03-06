@@ -12,9 +12,8 @@
 #define BUFFER_SIZE 1024
 #define MAX_ARGS 64
 
-/* test */
+// TODO: Create descriptions for each function
 FILE *openFile(char **);
-// test
 char *allocateString(int);
 void setShell();
 void tokenize(char *, char **);

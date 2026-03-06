@@ -1,7 +1,6 @@
 #include "simpleshell.h"
 
 // TODO: Potentially reduce overhead by creating a boolean var that tracks whether the dir has been changed in cd func
-// TODO: Create a makefile
 int main(int argc, char *argv[]) {
     char buffer[BUFFER_SIZE] = {0};
     char prompt[PATH_MAX + 3]; // +3 to fit in the ": \0"
