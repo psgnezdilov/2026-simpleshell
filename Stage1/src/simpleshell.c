@@ -5,9 +5,9 @@
 #include <unistd.h>
 #include <linux/limits.h>
 
-#define PROMPT "==> "
 #define SEPARATORS " \t\n"
 #define BUFFER_SIZE 1024
+#define MAX_ARGS 64
 
 /*
 Function prototypes
@@ -18,21 +18,25 @@ Function prototypes
     5. Execute internal command
     6. echo helper
 */
+// TODO: Add the functionality of batch file
 char *allocateString(int);
 
 void setShell();
 
 void tokenize(char *, char **);
+void cwdToPrompt(char *);
 
 bool isInternal(const char *command);
 
 void execInternal(char **args);
 
+void cd(char **);
+void dir(char **);
+void env();
 void echo(char **args);
-
+void help();
 void pauseShell();
 
-void help();
 // Static and global variables
 static char *internalCommands[] = {
     "cd", "clr", "dir", "environ", "echo",
@@ -40,15 +44,19 @@ static char *internalCommands[] = {
 };
 extern char **environ;
 
+// TODO: Potentially reduce overhead by creating a boolean var that tracks whether the dir has been changed in cd func
+// TODO: Move functions and prototypes to the header file and utility.c
+// TODO: Create a makefile
 int main(int argc, char *argv[]) {
-    // Get shell path and set the environment
-    setShell();
-    // TODO: Prompt should include pathname of curr dir
-    fputs(PROMPT, stdout);
     char buffer[BUFFER_SIZE] = {0};
+    char prompt[PATH_MAX + 3]; // +3 to fit in the ": \0"
+
+    cwdToPrompt(prompt);       // Get the cwd path and format it for the prompt
+    setShell();                // Get shell path and set the environment
+    fputs(prompt, stdout);
 
     while (fgets(buffer, BUFFER_SIZE, stdin) != NULL) {
-        char *args[64] = {0};
+        char *args[MAX_ARGS] = {0};
         // Read and tokenize the input line
         char *bufCopy = strdup(
             buffer); // Free it at the end of the loop since it holds the strings
@@ -63,9 +71,10 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "{%s} command is not supported by the shell\n", args[0]);
         }
 
-        free(bufCopy);
-        bufCopy = NULL;
-        fputs(PROMPT, stdout);
+        free(bufCopy);            // Free the memory to avoid memory leak on next strdups
+        bufCopy = NULL;           // Just in case to avoid pointing to garbage
+        cwdToPrompt(prompt);      // Update the prompt after executing a command
+        fputs(prompt, stdout);
     }
 }
 
@@ -92,12 +101,22 @@ void tokenize(char *buffer, char **args) {
     char *token = strtok_r(buffer, SEPARATORS, &saveptr);
     int i = 0;
 
-    while (token != NULL) {
+    while (token != NULL && i < MAX_ARGS - 1) { // MAX_ARGS - 1 to leave space for NULL
         args[i] = token;
         token = strtok_r(NULL, SEPARATORS, &saveptr);
         i++;
     }
     args[i] = NULL;
+}
+
+void cwdToPrompt(char *cwd) {
+    if (getcwd(cwd, PATH_MAX) != NULL) {
+        strcat(cwd, ": ");
+    } else {
+        fputs("Unable to get cwd\n", stderr);
+        exit(1);  // Design choice to end the program if we don't get the cwd since the prompt will be broken
+                        // Could have a default instead, but for now we just exit the program
+    }
 }
 
 bool isInternal(const char *command) {
@@ -112,38 +131,13 @@ bool isInternal(const char *command) {
 void execInternal(char **args) {
     const char *cmd = args[0];
     if (strcmp(cmd, "cd") == 0) {
-        // TODO: Maybe move part of the logic into helper functions
-        char currentDir[PATH_MAX] = {0};
-
-        if (args[1] != NULL) {
-            if (chdir(args[1]) != 0) {
-                perror("cd");
-            } else {
-                if (getcwd(currentDir, PATH_MAX) != NULL) {
-                    setenv("PWD", currentDir, 1);
-                } else {
-                    perror("cd -> getcwd failed after chdir");
-                }
-            }
-        } else {
-            if (getcwd(currentDir, PATH_MAX) != NULL) {
-                puts(currentDir);
-            } else {
-                perror("cd -> getcwd failed");
-            }
-        }
+        cd(args);
     } else if (strcmp(cmd, "clr") == 0) {
         system("clear");
     } else if (strcmp(cmd, "dir") == 0) {
-        char fullCommand[PATH_MAX] = "ls -al ";
-        if (args[1]) {
-            strncat(fullCommand, args[1], PATH_MAX - strlen(fullCommand) - 1);
-        }
-        system(fullCommand);
+        dir(args);
     } else if (strcmp(cmd, "environ") == 0) {
-        for (int i = 0; environ[i]; i++) {
-            puts(environ[i]);
-        }
+        env();
     } else if (strcmp(cmd, "echo") == 0) {
         echo(args);
     } else if (strcmp(cmd, "help") == 0) {
@@ -175,22 +169,65 @@ void pauseShell() {
     }
 }
 
-// TODO: Add error handling
 void help() {
     const char *envPath = getenv("SHELL");
-    char *envCopy = strdup(envPath);
 
-    char *lastSlash = strrchr(envCopy, '/');
-    if (lastSlash != NULL) {
-        *(lastSlash + 1) = '\0';
+    if (envPath == NULL) {
+        fputs("Unable to get SHELL path\n", stderr);
     } else {
-        envCopy[0] = '\0';
+        char *envCopy = strdup(envPath);
+        if (envCopy == NULL) {
+            fputs("Unable to duplicate SHELL path\n", stderr);
+        } else {
+            char *lastSlash = strrchr(envCopy, '/');
+            if (lastSlash != NULL) {
+                *(lastSlash + 1) = '\0';
+            } else {
+                envCopy[0] = '\0';
+            }
+
+            char fullCmd[PATH_MAX] = {0};
+            snprintf(fullCmd, PATH_MAX, "more %smanual/readme.txt", envCopy);
+            system(fullCmd);
+
+            free(envCopy);
+            envCopy = NULL;
+        }
     }
+}
 
-    char fullCmd[PATH_MAX] = {0};
-    snprintf(fullCmd, PATH_MAX, "more %smanual/readme.txt", envCopy);
-    system(fullCmd);
+void cd(char **args) {
+    char currentDir[PATH_MAX] = {0};
 
-    free(envCopy);
-    envCopy = NULL;
+    if (args[1] != NULL) {
+        if (chdir(args[1]) != 0) {
+            perror("cd");
+        } else {
+            if (getcwd(currentDir, PATH_MAX) != NULL) {
+                setenv("PWD", currentDir, 1);
+            } else {
+                perror("cd -> getcwd failed after chdir");
+            }
+        }
+    } else {
+        if (getcwd(currentDir, PATH_MAX) != NULL) {
+            puts(currentDir);
+        } else {
+            perror("cd -> getcwd failed");
+        }
+    }
+}
+
+void dir(char **args) {
+    char fullCommand[PATH_MAX] = "ls -al ";
+    if (args[1]) {
+        strncat(fullCommand, args[1], PATH_MAX - strlen(fullCommand) - 1);
+    }
+    system(fullCommand);
+}
+
+void env() {
+    for (int i = 0; environ[i]; i++) {
+        puts(environ[i]);
+    }
 }
