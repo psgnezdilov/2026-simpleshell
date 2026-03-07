@@ -1,12 +1,12 @@
 #ifndef SIMPLESHELL
 #define SIMPLESHELL
 
+#include <linux/limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <linux/limits.h>
 
 #define SEPARATORS " \t\n"
 #define BUFFER_SIZE 1024
@@ -15,7 +15,7 @@
 // TODO: Create descriptions for each function
 FILE *openFile(char **);
 char *allocateString(int);
-void setShell();
+void setShell(char *);
 void tokenize(char *, char **);
 void cwdToPrompt(char *);
 bool isInternal(const char *command);
