@@ -36,3 +36,9 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+
+/*
+Name: Pavel Soshenko Gnezdilov
+Student Number: 41071
+I acknowledge the DCU Academic Integrity Policy.
+*/

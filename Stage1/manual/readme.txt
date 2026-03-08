@@ -17,3 +17,8 @@ help => Display user manual
 pause => Pause shell operation until 'ENTER' is pressed
 
 quit => Quit the shell
+
+
+Name: Pavel Soshenko Gnezdilov
+Student Number: 41071
+I acknowledge the DCU Academic Integrity Policy.

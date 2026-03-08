@@ -29,3 +29,9 @@ void pauseShell();
 extern char **environ;
 
 #endif
+
+/*
+Name: Pavel Soshenko Gnezdilov
+Student Number: 41071
+I acknowledge the DCU Academic Integrity Policy.
+*/

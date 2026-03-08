@@ -41,8 +41,7 @@ void tokenize(char *buffer, char **args) {
     char *token = strtok_r(buffer, SEPARATORS, &saveptr);
     int i = 0;
 
-    while (token != NULL &&
-           i < MAX_ARGS - 1) {
+    while (token != NULL && i < MAX_ARGS - 1) {
         // MAX_ARGS - 1 to leave space for NULL
         args[i] = token;
         token = strtok_r(NULL, SEPARATORS, &saveptr);
@@ -183,3 +182,9 @@ void env() {
         puts(environ[i]);
     }
 }
+
+/*
+Name: Pavel Soshenko Gnezdilov
+Student Number: 41071
+I acknowledge the DCU Academic Integrity Policy.
+*/
