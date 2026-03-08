@@ -12,7 +12,6 @@
 #define BUFFER_SIZE 1024
 #define MAX_ARGS 64
 
-// TODO: Create descriptions for each function
 FILE *openFile(char **);
 char *allocateString(int);
 void setShell(char *);
