@@ -7,10 +7,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define SEPARATORS " \t\n"
 #define BUFFER_SIZE 1024
 #define MAX_ARGS 64
+
+extern char **environ;
+
+struct execModifiers {
+    // -1 => not to use it, other is the index of the sign inside the argument array
+    int inFile;
+    int outFile;
+    int bgExec;
+    int appendFile;
+};
 
 FILE *openFile(char **);
 char *allocateString(int);
@@ -25,8 +37,9 @@ void env();
 void echo(char **args);
 void help();
 void pauseShell();
+void forkAndExec(char **);
+void checkForModifiers(struct execModifiers *, char **);
 
-extern char **environ;
 
 #endif
 

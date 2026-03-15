@@ -1,5 +1,9 @@
 #include "simpleshell.h"
 
+// TODO: Fork and execute external commands
+// TODO: Accept stdin and stdout as arguments as well as both '>' and '>>'
+// TODO: Background execution
+
 int main(int argc, char *argv[]) {
     char buffer[BUFFER_SIZE] = {0};
     char prompt[PATH_MAX + 3]; // +3 to fit in the ": \0"
@@ -25,9 +29,10 @@ int main(int argc, char *argv[]) {
         } else if (args[0] == NULL) {
             fputs("No input, try again\n", stderr);
         } else {
-            fprintf(stderr, "{%s} command is not supported by the shell\n", args[0]);
+            forkAndExec(args);
         }
 
+        // FIXME: Fix the output after fork and exec
         free(bufCopy); // Free the memory to avoid memory leak on next strdups
         bufCopy = NULL; // Just in case to avoid pointing to garbage
         cwdToPrompt(prompt); // Update the prompt after executing a command

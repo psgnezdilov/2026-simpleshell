@@ -6,6 +6,7 @@ static char *internalCommands[] = {
     "help", "pause", "quit", 0
 };
 
+
 // Attempt opening the file, if failed, exit the program
 FILE *openFile(char **argv) {
     FILE *filePtr = fopen(argv[1], "r");
@@ -183,6 +184,46 @@ void env() {
     }
 }
 
+void forkAndExec(char **args) {
+    pid_t pid;
+    int returnCode;
+    struct execModifiers modifiers;
+    checkForModifiers(&modifiers, args);
+
+    switch(pid = fork()) {
+        case -1:
+            fputs("Fork error\n", stderr);
+        case 0:
+            execvp(args[0], args);
+            perror("Exec error");
+        default:
+            if (modifiers.bgExec != -1) {
+                printf("bg index: %d\n", modifiers.bgExec);
+                wait(&returnCode);
+            }
+    }
+}
+
+// TODO: Figure out how to handle all the modifiers
+// TODO: Revise how fork and exec work in detail
+void checkForModifiers(struct execModifiers *modifiers, char **args) {
+    modifiers -> bgExec = modifiers -> inFile = modifiers -> outFile = modifiers -> appendFile = -1;
+    for (int i = 0; args[i]; i++) {
+        char *arg = args[i];
+        if (strcmp(arg, "<") == 0) {
+            modifiers -> inFile = i;
+        }
+        else if (strcmp(arg, ">") == 0) {
+            modifiers -> outFile = i;
+        }
+        else if (strcmp(arg, ">>") == 0) {
+            modifiers -> appendFile = i;
+        }
+        else if (strcmp(arg, "&") == 0) {
+            modifiers -> bgExec = i;
+        }
+    }
+}
 /*
 Name: Pavel Soshenko Gnezdilov
 Student Number: 41071
