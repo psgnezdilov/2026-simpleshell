@@ -185,44 +185,83 @@ void env() {
 }
 
 void forkAndExec(char **args) {
-    pid_t pid;
     int returnCode;
     struct execModifiers modifiers;
-    checkForModifiers(&modifiers, args);
+    checkForModifiers(&modifiers, args); // Will replace modifiers with NULLs so that exec doesn't go past them
 
-    switch(pid = fork()) {
-        case -1:
+    switch(fork()) {
+        case -1: // Failed to fork
             fputs("Fork error\n", stderr);
-        case 0:
+            break;
+        case 0: // Child process
+            setParent(); // Sets PARENT variable
+            openRedirection(modifiers); // redirects streams in/from files before exec
             execvp(args[0], args);
-            perror("Exec error");
-        default:
-            if (modifiers.bgExec != -1) {
-                printf("bg index: %d\n", modifiers.bgExec);
+            perror("Exec error"); // If exec fails, we reach this command
+            break;
+        default: // Parent process
+            if (modifiers.bgExec == false) {
                 wait(&returnCode);
             }
     }
 }
 
-// TODO: Figure out how to handle all the modifiers
-// TODO: Revise how fork and exec work in detail
+/*
+The function goes through all the arguments and looks for execution modifiers.
+As it progresses, it puts NULL pointers on the go not to modify argument array later for exec
+*/
 void checkForModifiers(struct execModifiers *modifiers, char **args) {
-    modifiers -> bgExec = modifiers -> inFile = modifiers -> outFile = modifiers -> appendFile = -1;
+    modifiers -> bgExec = false;
+    modifiers -> inFile = modifiers -> outFile = modifiers -> appendFile = NULL;
     for (int i = 0; args[i]; i++) {
         char *arg = args[i];
         if (strcmp(arg, "<") == 0) {
-            modifiers -> inFile = i;
+            modifiers -> inFile = args[i + 1];
+            args[i++] = NULL;
         }
         else if (strcmp(arg, ">") == 0) {
-            modifiers -> outFile = i;
+            modifiers -> outFile = args[i + 1];
+            args[i++] = NULL;
         }
         else if (strcmp(arg, ">>") == 0) {
-            modifiers -> appendFile = i;
+            modifiers -> appendFile = args[i + 1];
+            args[i++] = NULL;
         }
         else if (strcmp(arg, "&") == 0) {
-            modifiers -> bgExec = i;
+            modifiers -> bgExec = true;
+            args[i] = NULL;
         }
     }
+}
+
+// Open various files and redirect stdout/stdin streams depending on the presence of modifiers
+void openRedirection(struct execModifiers modifiers) {
+    if (modifiers.outFile != NULL) {
+        if (freopen(modifiers.outFile, "w", stdout) == NULL) { // Open write redirection
+            perror("Unable to proceed with '>' modifier");
+            exit(EXIT_FAILURE);
+        };
+    } else if (modifiers.appendFile != NULL) {
+        if (freopen(modifiers.appendFile, "a", stdout) == NULL) { // Open append redirection
+            perror("Unable to proceed with '>>' modifier");
+            exit(EXIT_FAILURE);
+        }
+    }
+    if (modifiers.inFile != NULL) {
+        if (freopen(modifiers.inFile, "r", stdin) == NULL) { // Open read redirection into command
+            perror("Unable to proceed with '<' modifier");
+            exit(EXIT_FAILURE);
+        }
+    }
+}
+
+void setParent() {
+    char *parent = getenv("SHELL");
+    if (parent == NULL) {
+        fputs("Unable to get 'SHELL' variable from the environment\n", stderr);
+        return;
+    }
+    setenv("PARENT", parent, 1);
 }
 /*
 Name: Pavel Soshenko Gnezdilov

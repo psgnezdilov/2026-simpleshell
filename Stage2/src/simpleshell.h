@@ -17,11 +17,10 @@
 extern char **environ;
 
 struct execModifiers {
-    // -1 => not to use it, other is the index of the sign inside the argument array
-    int inFile;
-    int outFile;
-    int bgExec;
-    int appendFile;
+    char *inFile;
+    char *outFile;
+    char *appendFile;
+    bool bgExec;
 };
 
 FILE *openFile(char **);
@@ -39,6 +38,8 @@ void help();
 void pauseShell();
 void forkAndExec(char **);
 void checkForModifiers(struct execModifiers *, char **);
+void openRedirection(struct execModifiers);
+void setParent();
 
 
 #endif

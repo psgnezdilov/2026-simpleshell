@@ -1,9 +1,5 @@
 #include "simpleshell.h"
 
-// TODO: Fork and execute external commands
-// TODO: Accept stdin and stdout as arguments as well as both '>' and '>>'
-// TODO: Background execution
-
 int main(int argc, char *argv[]) {
     char buffer[BUFFER_SIZE] = {0};
     char prompt[PATH_MAX + 3]; // +3 to fit in the ": \0"
@@ -18,6 +14,7 @@ int main(int argc, char *argv[]) {
     setShell(argv[0]); // Get shell path and set the environment
     fputs(prompt, stdout);
 
+    // TODO: Add redirection for internal commands
     while (fgets(buffer, BUFFER_SIZE, inputPtr) != NULL) {
         char *args[MAX_ARGS] = {0};
         // Read and tokenize the input line
@@ -32,7 +29,6 @@ int main(int argc, char *argv[]) {
             forkAndExec(args);
         }
 
-        // FIXME: Fix the output after fork and exec
         free(bufCopy); // Free the memory to avoid memory leak on next strdups
         bufCopy = NULL; // Just in case to avoid pointing to garbage
         cwdToPrompt(prompt); // Update the prompt after executing a command
