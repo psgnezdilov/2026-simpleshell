@@ -36,7 +36,7 @@ void env();
 void echo(char **args);
 void help();
 void pauseShell();
-void forkAndExec(char **);
+void forkAndExec(char **, struct execModifiers);
 void checkForModifiers(struct execModifiers *, char **);
 void openRedirection(struct execModifiers);
 void setParent();

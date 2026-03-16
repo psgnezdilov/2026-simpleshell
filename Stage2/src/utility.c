@@ -184,10 +184,8 @@ void env() {
     }
 }
 
-void forkAndExec(char **args) {
+void forkAndExec(char **args, struct execModifiers modifiers) {
     int returnCode;
-    struct execModifiers modifiers;
-    checkForModifiers(&modifiers, args); // Will replace modifiers with NULLs so that exec doesn't go past them
 
     switch(fork()) {
         case -1: // Failed to fork
@@ -195,7 +193,6 @@ void forkAndExec(char **args) {
             break;
         case 0: // Child process
             setParent(); // Sets PARENT variable
-            openRedirection(modifiers); // redirects streams in/from files before exec
             execvp(args[0], args);
             perror("Exec error"); // If exec fails, we reach this command
             break;

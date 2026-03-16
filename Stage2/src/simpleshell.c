@@ -14,19 +14,25 @@ int main(int argc, char *argv[]) {
     setShell(argv[0]); // Get shell path and set the environment
     fputs(prompt, stdout);
 
-    // TODO: Add redirection for internal commands
+    // FIXME: Not allow and <
+    // FIXME: Handle help redirection to a file
     while (fgets(buffer, BUFFER_SIZE, inputPtr) != NULL) {
+        struct execModifiers modifiers;
         char *args[MAX_ARGS] = {0};
+
         // Read and tokenize the input line
         char *bufCopy = strdup(buffer); // Free it at the end of the loop since it holds the strings
         tokenize(bufCopy, args); // Tokenize the "bufCopy" and save pointers to the "args"
+
+        checkForModifiers(&modifiers, args); // Will replace modifiers with NULLs so that exec doesn't go past them
+        openRedirection(modifiers); // redirects streams in/from files before exec
 
         if (args[0] && isInternal(args[0])) {
             execInternal(args);
         } else if (args[0] == NULL) {
             fputs("No input, try again\n", stderr);
         } else {
-            forkAndExec(args);
+            forkAndExec(args, modifiers);
         }
 
         free(bufCopy); // Free the memory to avoid memory leak on next strdups
