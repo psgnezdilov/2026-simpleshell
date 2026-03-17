@@ -85,7 +85,7 @@ void execInternal(char **args, struct execModifiers modifiers) {
     } else if (strcmp(cmd, "echo") == 0) {
         echo(args);
     } else if (strcmp(cmd, "help") == 0) {
-        help(modifiers);
+        help();
     } else if (strcmp(cmd, "pause") == 0) {
         pauseShell();
     } else if (strcmp(cmd, "quit") == 0) {
@@ -118,7 +118,7 @@ void pauseShell() {
     }
 }
 
-void help(struct execModifiers modifiers) {
+void help() {
     const char *envPath = getenv("SHELL");
 
     if (envPath == NULL) {

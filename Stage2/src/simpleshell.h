@@ -34,7 +34,7 @@ void cd(char **);
 void dir(char **);
 void env();
 void echo(char **args);
-void help(struct execModifiers);
+void help();
 void pauseShell();
 void forkAndExec(char **, struct execModifiers);
 void checkForModifiers(struct execModifiers *, char **);
