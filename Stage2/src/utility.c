@@ -72,7 +72,7 @@ bool isInternal(const char *command) {
     return false; // no matches
 }
 
-void execInternal(char **args) {
+void execInternal(char **args, struct execModifiers modifiers) {
     const char *cmd = args[0];
     if (strcmp(cmd, "cd") == 0) {
         cd(args);
@@ -85,7 +85,7 @@ void execInternal(char **args) {
     } else if (strcmp(cmd, "echo") == 0) {
         echo(args);
     } else if (strcmp(cmd, "help") == 0) {
-        help();
+        help(modifiers);
     } else if (strcmp(cmd, "pause") == 0) {
         pauseShell();
     } else if (strcmp(cmd, "quit") == 0) {
@@ -118,7 +118,7 @@ void pauseShell() {
     }
 }
 
-void help() {
+void help(struct execModifiers modifiers) {
     const char *envPath = getenv("SHELL");
 
     if (envPath == NULL) {
@@ -136,8 +136,9 @@ void help() {
             *(envCopy + envCopyLength - lastPathItemsLength) = '\0';
 
             // Assemble the full command and execute
-            char fullCmd[PATH_MAX] = {0};
-            snprintf(fullCmd, PATH_MAX, "more %s/manual/readme.txt", envCopy);
+            char fullCmd[PATH_MAX + 10] = {0}; // Padding for the path and the 'more' command
+            sprintf(fullCmd, "more %s/manual/readme.txt", envCopy);
+
             system(fullCmd);
 
             // Free envCopy to avoid memory leaks in case of multiple uses
@@ -231,6 +232,7 @@ void checkForModifiers(struct execModifiers *modifiers, char **args) {
     }
 }
 
+// TODO: Separate openOut and openIn
 // Open various files and redirect stdout/stdin streams depending on the presence of modifiers
 void openRedirection(struct execModifiers modifiers) {
     if (modifiers.outFile != NULL) {
@@ -250,6 +252,17 @@ void openRedirection(struct execModifiers modifiers) {
             exit(EXIT_FAILURE);
         }
     }
+}
+
+void closeRedirection(int savedStdin, int savedStdout) {
+    fflush(stdout); // flush the buffer into the file in case there's something left inside
+    // Copy the state back to stdin and stdout
+    dup2(savedStdin, STDIN_FILENO);
+    dup2(savedStdout, STDOUT_FILENO);
+    // Close saved stdin and stdout to avoid file descriptor leaks
+    close(savedStdin);
+    close(savedStdout);
+
 }
 
 void setParent() {

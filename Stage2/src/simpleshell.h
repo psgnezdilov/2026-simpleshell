@@ -29,16 +29,17 @@ void setShell(char *);
 void tokenize(char *, char **);
 void cwdToPrompt(char *);
 bool isInternal(const char *command);
-void execInternal(char **args);
+void execInternal(char **args, struct execModifiers);
 void cd(char **);
 void dir(char **);
 void env();
 void echo(char **args);
-void help();
+void help(struct execModifiers);
 void pauseShell();
 void forkAndExec(char **, struct execModifiers);
 void checkForModifiers(struct execModifiers *, char **);
 void openRedirection(struct execModifiers);
+void closeRedirection(int savedStdin, int savedStdout);
 void setParent();
 
 
