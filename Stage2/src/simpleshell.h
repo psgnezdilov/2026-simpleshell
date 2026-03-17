@@ -38,7 +38,8 @@ void help(struct execModifiers);
 void pauseShell();
 void forkAndExec(char **, struct execModifiers);
 void checkForModifiers(struct execModifiers *, char **);
-void openRedirection(struct execModifiers);
+int openRedirection(struct execModifiers);
+void processCommand(char **, struct execModifiers);
 void closeRedirection(int savedStdin, int savedStdout);
 void setParent();
 

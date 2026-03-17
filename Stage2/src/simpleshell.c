@@ -29,24 +29,7 @@ int main(int argc, char *argv[]) {
 
         checkForModifiers(&modifiers, args); // Will replace modifiers with NULLs so that exec doesn't go past them
 
-        if (args[0] == NULL) {
-            fputs("No input, try again\n", stderr);
-        } else {
-            int internal = isInternal(args[0]);
-            
-            // Internal commands do not read from stdin in this shell
-            if (internal) {
-                modifiers.inFile = NULL;
-            }
-            
-            openRedirection(modifiers); // Redirects streams in/from files before exec
-            
-            if (internal) {
-                execInternal(args, modifiers);
-            } else {
-                forkAndExec(args, modifiers);
-            }
-        }
+        processCommand(args, modifiers); // Perform checks whether internal or external, proceed accordingly
 
         closeRedirection(savedStdin, savedStdout); // Redirects back to stdin and stdout, and closes saved FDs
 

@@ -195,7 +195,9 @@ void forkAndExec(char **args, struct execModifiers modifiers) {
         case 0: // Child process
             setParent(); // Sets PARENT variable
             execvp(args[0], args);
+
             perror("Exec error"); // If exec fails, we reach this command
+            exit(1);
             break;
         default: // Parent process
             if (modifiers.bgExec == false) {
@@ -232,26 +234,26 @@ void checkForModifiers(struct execModifiers *modifiers, char **args) {
     }
 }
 
-// TODO: Separate openOut and openIn
 // Open various files and redirect stdout/stdin streams depending on the presence of modifiers
-void openRedirection(struct execModifiers modifiers) {
+int openRedirection(struct execModifiers modifiers) { // 0 for success, -1 for failure
     if (modifiers.outFile != NULL) {
         if (freopen(modifiers.outFile, "w", stdout) == NULL) { // Open write redirection
             perror("Unable to proceed with '>' modifier");
-            exit(EXIT_FAILURE);
+            return -1;
         };
     } else if (modifiers.appendFile != NULL) {
         if (freopen(modifiers.appendFile, "a", stdout) == NULL) { // Open append redirection
             perror("Unable to proceed with '>>' modifier");
-            exit(EXIT_FAILURE);
+            return -1;
         }
     }
     if (modifiers.inFile != NULL) {
         if (freopen(modifiers.inFile, "r", stdin) == NULL) { // Open read redirection into command
             perror("Unable to proceed with '<' modifier");
-            exit(EXIT_FAILURE);
+            return -1;
         }
     }
+    return 0;
 }
 
 void closeRedirection(int savedStdin, int savedStdout) {
@@ -263,6 +265,28 @@ void closeRedirection(int savedStdin, int savedStdout) {
     close(savedStdin);
     close(savedStdout);
 
+}
+
+void processCommand(char **args, struct execModifiers modifiers) {
+    if (args[0] == NULL) {
+        fputs("No input, try again\n", stderr);
+        return;
+    }
+
+    int internal = isInternal(args[0]);
+    
+    // Internal commands do not read from stdin in this shell
+    if (internal) {
+        modifiers.inFile = NULL;
+    }
+    
+    if (openRedirection(modifiers) == 0) { // Redirects streams in/from files before exec 
+        if (internal) {
+            execInternal(args, modifiers);
+        } else {
+            forkAndExec(args, modifiers);
+        }
+    } 
 }
 
 void setParent() {
