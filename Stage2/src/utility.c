@@ -206,6 +206,7 @@ void forkAndExec(char **args, struct execModifiers modifiers) {
     }
 }
 
+// TODO: Potentially add a return value from function in case there's no file provded after a redirection sign to interrupt the execution of the next cmd
 /*
 The function goes through all the arguments and looks for execution modifiers.
 As it progresses, it puts NULL pointers on the go not to modify argument array later for exec
@@ -213,23 +214,24 @@ As it progresses, it puts NULL pointers on the go not to modify argument array l
 void checkForModifiers(struct execModifiers *modifiers, char **args) {
     modifiers -> bgExec = false;
     modifiers -> inFile = modifiers -> outFile = modifiers -> appendFile = NULL;
-    for (int i = 0; args[i]; i++) {
+
+    for (int i = 0; args[i] && args[i + 1] != NULL; i++) {
         char *arg = args[i];
         if (strcmp(arg, "<") == 0) {
             modifiers -> inFile = args[i + 1];
-            args[i++] = NULL;
+            args[i] = NULL;
         }
         else if (strcmp(arg, ">") == 0) {
             modifiers -> outFile = args[i + 1];
-            args[i++] = NULL;
+            args[i] = NULL;
         }
         else if (strcmp(arg, ">>") == 0) {
             modifiers -> appendFile = args[i + 1];
-            args[i++] = NULL;
-        }
-        else if (strcmp(arg, "&") == 0) {
-            modifiers -> bgExec = true;
             args[i] = NULL;
+        }
+        else if (strcmp(args[i + 1], "&") == 0) {
+            modifiers -> bgExec = true;
+            args[i + 1] = NULL;
         }
     }
 }

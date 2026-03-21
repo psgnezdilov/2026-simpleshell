@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 
         checkForModifiers(&modifiers, args); // Will replace modifiers with NULLs so that exec doesn't go past them
 
-        processCommand(args, modifiers); // Perform checks whether internal or external, proceed accordingly
+        processCommand(args, modifiers); // Perform checks whether internal or external, proceeds accordingly
 
         closeRedirection(savedStdin, savedStdout); // Redirects back to stdin and stdout, and closes saved FDs
 
